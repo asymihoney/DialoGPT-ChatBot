@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>ChatBot</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+    }
+
+    h1 {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #00bcd4;
+    }
+
+    #chat {
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      width: 90%;
+      max-width: 600px;
+      height: 70vh;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+
+    .message {
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      /* Ensure long words break */
+      max-width: auto;
+      /* Remove fixed max-width to auto-fit */
+      width: fit-content;
+      /* Allow width to adjust based on content */
+    }
+
+    .user {
+      background-color: #1976d2;
+      color: white;
+      align-self: flex-end;
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .bot {
+      background-color: #388e3c;
+      color: white;
+      align-self: flex-start;
+      margin-right: auto;
+      text-align: left;
+    }
+
+    #input-container {
+      display: flex;
+      justify-content: center;
+      width: 90%;
+      max-width: 600px;
+      margin: 15px auto;
+      gap: 10px;
+    }
+
+    #input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background-color: #2a2a2a;
+      color: white;
+      font-size: 14px;
+    }
+
+    #clear-btn {
+      background-color: #e53935;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #clear-btn:hover {
+      background-color: #d32f2f;
+    }
+
+    #send-btn {
+      background-color: #00bcd4;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #send-btn:hover {
+      background-color: #00acc1;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>DialoGPT Test</h1>
+  <div id="chat"></div>
+
+  <div id="input-container">
+    <input id="input" placeholder="Type a message..." />
+    <button id="send-btn" onclick="send()">Send</button>
+    <button id="clear-btn" onclick="clearHistory()">Clear</button>
+  </div>
+
+  <script>
+    const chatDiv = document.getElementById("chat");
+    const input = document.getElementById("input");
+    
+    function scrollToBottom() {
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+    
+    function appendMessage(sender, text, timestamp = null) {
+      const msg = document.createElement("div");
+      msg.classList.add("message", sender);
+    
+      const timeString = timestamp ? `\n ${timestamp}` : `\n ${new Date().toLocaleTimeString()}`;
+      msg.textContent = `${sender === 'user' ? '' : ''} ${text}${timeString}`;
+      
+      chatDiv.appendChild(msg);
+      setTimeout(scrollToBottom, 50); // ✅ small delay to ensure DOM renders first
+    }
+    
+    async function send() {
+      const message = input.value.trim();
+      if (!message) return;
+    
+      appendMessage("user", message);
+      input.value = "";
+    
+      const response = await window.api.chat(message);
+      appendMessage("bot", response);
+    }
+    
+    // 🚀 Load previous chat history
+    async function loadHistory() {
+      try {
+        const response = await fetch('http://localhost:5000/history');
+        const history = await response.json();
+    
+        history.forEach(([user_message, bot_reply]) => {
+          appendMessage("user", user_message);
+          appendMessage("bot", bot_reply);
+        });
+    
+        setTimeout(scrollToBottom, 100); // ✅ scroll after loading history
+      } catch (error) {
+        console.error("Failed to load chat history:", error);
+      }
+    }
+    
+    // 🚀 Clear all history
+    async function clearHistory() {
+      if (!confirm("Are you sure you want to clear all chat history?")) return;
+    
+      try {
+        const response = await fetch('http://localhost:5000/clear', { method: 'POST' });
+        const result = await response.json();
+        console.log(result.message);
+    
+        chatDiv.innerHTML = ''; // Clear chat window visually
+      } catch (error) {
+        console.error("Failed to clear chat history:", error);
+      }
+    }
+    
+    // Load chats when app starts
+    window.onload = loadHistory;
+    
+    // Send message on Enter key
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") send();
+    });
+    </script>    
+</body>
+
+</html>

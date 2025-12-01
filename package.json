@@ -1,0 +1,29 @@
+{
+  "name": "electron-chatbot",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.chatbot.desktop",
+    "productName": "ChatBot",
+    "files": [
+      "**/*",
+      "dist/app/**"
+    ],
+    "compression": "store",
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "useZip": true
+    }
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "electron": "^28.0.0",
+    "postcss": "^8.5.3"
+  }
+}
